@@ -31,86 +31,155 @@ namespace NodeSystem.Nodes
 
             return compatibleNodes;
         }
-
-        public bool DrawConnectedNodes(INode node, int depth = 0, List<DepthData>? ids = null)
+        public bool CheckHasInfiniteLoop(INode node)
         {
-             bool isInfinityLoop = false;
+            return HasInfiniteLoop(node);
+        }
 
-            if (isInfinityLoop)
-                return true;
+        private bool HasInfiniteLoop(INode node, int depth = 0, Dictionary<Guid, int>? visitedNodes = null, HashSet<Guid>? activeNodes = null)
+        {
+            // إنشاء القاموس والمجموعة عند الاستدعاء الأول
+            visitedNodes ??= new Dictionary<Guid, int>();
+            activeNodes ??= new HashSet<Guid>();
 
-            string myGuid = node.Guid.ToString();
-            foreach (var n in node.AllConnectedNodes)
+            // معرف العقدة الحالية
+            var nodeGuid = node.Guid;
+
+            // التحقق من الحلقات النهائية
+            if (activeNodes.Contains(nodeGuid))
             {
-                myGuid += "(" + n.Guid+ ")";
+                return true; // حلقة نهائية مكتشفة
             }
 
-            if (ids == null)
-            {
-                ids = new List<DepthData>();
-                ids.Add(new DepthData(myGuid, depth));
-            }
-            else if(myGuid.Length > 38)
-            {
-                DepthData foundNode = ids.FirstOrDefault(x => x.Depth < depth && x.Guids.Equals(myGuid));
+            // تسجيل العقدة في العقد النشطة
+            activeNodes.Add(nodeGuid);
 
-                if(foundNode.Guids != null && foundNode.Guids.Equals(myGuid))
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"ERROR: Infinity Loop Node: {node.Name}");
-                    Console.ForegroundColor = ConsoleColor.White;
-
-                    return true;
-                }
-                else
-                {
-                    ids.Add(new DepthData(myGuid, depth));
-                }
+            // إذا كانت العقدة جديدة، أضفها إلى العقد التي تمت زيارتها
+            if (!visitedNodes.ContainsKey(nodeGuid))
+            {
+                visitedNodes[nodeGuid] = depth;
             }
 
-            GenerateSpaces(depth);
-
-            Console.Write("-");
-
-            Console.WriteLine(node.Name);
-
-
+            // معالجة العقد المتصلة بناءً على نوع العقدة
             if (node is ConditionNode condNode)
             {
-                GenerateSpaces(depth);
-                Console.WriteLine("----TRUE:");
-
-                foreach (INode n in condNode.TrueNodes)
+                // التحقق من العقد المتصلة في حالة True
+                foreach (INode trueNode in condNode.TrueNodes)
                 {
-                    isInfinityLoop = DrawConnectedNodes(n, depth + 1, ids);
-                    if (isInfinityLoop)
-                        break;
+                    if (HasInfiniteLoop(trueNode, depth + 1, visitedNodes, activeNodes))
+                        return true;
                 }
 
-                GenerateSpaces(depth);
-
-                if (isInfinityLoop)
-                    return true;
-
-                Console.WriteLine("----FALSE:");
-
-                foreach (INode n in condNode.FalseNodes)
+                // التحقق من العقد المتصلة في حالة False
+                foreach (INode falseNode in condNode.FalseNodes)
                 {
-                    isInfinityLoop = DrawConnectedNodes(n, depth + 1, ids);
-                    if (isInfinityLoop)
-                        break;
+                    if (HasInfiniteLoop(falseNode, depth + 1, visitedNodes, activeNodes))
+                        return true;
                 }
             }
             else
             {
-                foreach (INode n in node.Outputs)
+                // التحقق من المخرجات العادية
+                foreach (INode outputNode in node.Outputs)
                 {
-                    isInfinityLoop = DrawConnectedNodes(n, depth + 1, ids);
-                    if (isInfinityLoop)
-                        break;
+                    if (HasInfiniteLoop(outputNode, depth + 1, visitedNodes, activeNodes))
+                        return true;
                 }
             }
-            return isInfinityLoop;
+
+            // إزالة العقدة من العقد النشطة بعد المعالجة
+            activeNodes.Remove(nodeGuid);
+
+            return false; // لا توجد دورة نهائية
+        }
+
+        public void DrawConnectedNodes(INode node)
+        {
+            DetectInfiniteLoop(node);
+        }
+
+        private bool DetectInfiniteLoop(INode node, int depth = 0, Dictionary<Guid, int>? visitedNodes = null, HashSet<Guid>? activeNodes = null)
+        {
+            // إنشاء القاموس والمجموعة عند الاستدعاء الأول
+            if (visitedNodes == null)
+            {
+                visitedNodes = new Dictionary<Guid, int>();
+            }
+            if (activeNodes == null)
+            {
+                activeNodes = new HashSet<Guid>();
+            }
+
+            // تحويل معرف العقدة الحالية إلى سلسلة نصية
+            var nodeGuid = node.Guid;
+
+            // التحقق من الحلقات النهائية
+            if (activeNodes.Contains(nodeGuid))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"ERROR: Final Loop Detected! Node '{node.Name}' is revisiting itself in the same path.");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                return true;
+            }
+
+            // إضافة العقدة إلى مجموعة العقد النشطة
+            activeNodes.Add(nodeGuid);
+
+            // تحقق ما إذا كانت العقدة قد زارت مسبقاً
+            if (!visitedNodes.TryGetValue(nodeGuid, out _))
+            {
+                visitedNodes[nodeGuid] = depth;
+            }
+
+            // طباعة اسم العقدة
+            GenerateSpaces(depth);
+            Console.Write("-");
+            Console.WriteLine(node.Name);
+
+            // معالجة العقدة حسب نوعها
+            if (node is ConditionNode condNode)
+            {
+                // العقد المتصلة في حالة الشرط True
+                GenerateSpaces(depth);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("---TRUE:");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                foreach (INode n in condNode.TrueNodes)
+                {
+                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                        return true;
+                }
+
+                // العقد المتصلة في حالة الشرط False
+                GenerateSpaces(depth);
+
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("---FALSE:");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                foreach (INode n in condNode.FalseNodes)
+                {
+                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                        return true;
+                }
+
+            }
+            else
+            {
+                // العقد المتصلة عبر المخرجات
+                foreach (INode n in node.Outputs)
+                {
+                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                        return true;
+                }
+            }
+
+            // إزالة العقدة من العقد النشطة بعد اكتمال المعالجة
+            activeNodes.Remove(nodeGuid);
+
+            return false; // لم يتم العثور على دورة نهائية
         }
 
         private void GenerateSpaces(int depth)
@@ -119,11 +188,11 @@ namespace NodeSystem.Nodes
             {
                 if (i == depth - 1)
                 {
-                    Console.Write("|---");
+                    Console.Write(" |---");
 
                 }
                 else
-                    Console.Write("|   ");
+                    Console.Write(" |   ");
             }
         }
 
@@ -131,6 +200,13 @@ namespace NodeSystem.Nodes
         {
             if (AllNodes.Count < StarterNodeIndex || AllNodes.Count == StarterNodeIndex)
                 return;
+            var starterNode = AllNodes[StarterNodeIndex];
+
+            if (CheckHasInfiniteLoop(starterNode))
+            {
+                DrawConnectedNodes(starterNode);
+                return;
+            }
 
             if(onExecute != null)
             {
@@ -140,7 +216,6 @@ namespace NodeSystem.Nodes
                 }
             }
 
-            var starterNode = AllNodes[StarterNodeIndex];
 
             if (starterNode == null)
                 return;

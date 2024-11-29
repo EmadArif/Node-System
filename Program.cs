@@ -2,32 +2,45 @@
 using NodeSystem.Nodes;
 
 
+TextNode starterText = new TextNode("starter text");
 TextNode text1 = new TextNode("text1");
-TextNode text2= new TextNode("text2");
+TextNode text2 = new TextNode("text2");
 TextNode text3 = new TextNode("text3");
-
 CounterNode counter = new CounterNode("counter");
+ConditionNode condition1 = new ConditionNode("condition 1");
+ConditionNode condition2 = new ConditionNode("condition 2");
+
+//Override the Process function.
 counter.Process = async (v) =>
 {
-    for (int i = 0; i < 10; i++)
+    bool parsed = int.TryParse(v.ToString(), out int value);
+    if (parsed)
     {
-        await Task.Delay(20);
-        Console.WriteLine(i);
+        for (int i = 0; i < 10; i++)
+        {
+            await Task.Delay(20);
+            Console.WriteLine(i);
+        }
+
+        return value;
     }
-    return 33;
+   return 0;
 };
-
-ConditionNode condition1 = new ConditionNode("condition 1");
-
-
-condition1.AddTrueNode(text1);
-
-condition1.AddFalseNode(text2);
-condition1.AddFalseNode(text1);
 
 condition1.Process = (v) =>
 {
-    Console.Write("Enter True/False: ");
+    Console.Write("Enter Condition 1 True/False: ");
+    string? value = Console.ReadLine();
+
+
+    if (value == "True")
+        return Task.FromResult(true);
+
+    return Task.FromResult(false);
+};
+condition2.Process = (v) =>
+{
+    Console.Write("Enter Condition 2 True/False: ");
     string? value = Console.ReadLine();
 
 
@@ -37,44 +50,49 @@ condition1.Process = (v) =>
     return Task.FromResult(false);
 };
 
+//Connect the nodes.
+starterText.AddConnection(condition1);
 
-ConditionNode condition2 = new ConditionNode("condition 2");
+condition1.AddTrueNode(text1);
+condition1.AddTrueNode(text2);
+condition1.AddTrueNode(text3);
+
+condition1.AddFalseNode(condition2);
 
 condition2.AddTrueNode(text2);
 condition2.AddTrueNode(text2);
+condition2.AddTrueNode(text1);
+
 condition2.AddTrueNode(text1);
 
 text1.AddConnection(counter);
 text2.AddConnection(text3);
 text3.AddConnection(text1);
 
-ConditionNode condition3 = new ConditionNode("condition 3");
-
-condition3.AddTrueNode(text2);
-condition3.AddTrueNode(text2);
-condition3.AddTrueNode(text1);
-
-condition2.AddTrueNode(condition3);
 
 
 NodeManager nodeManager = new();
-/*nodeManager.IsLoop = true;
+nodeManager.IsLoop = true;
+nodeManager.AddNode(starterText);
 nodeManager.AddNode(condition1);
+nodeManager.AddNode(condition2);
 nodeManager.AddNode(text1);
 nodeManager.AddNode(text2);
-nodeManager.AddNode(counter);
-*/
+nodeManager.AddNode(text3);
 
 
-nodeManager.DrawConnectedNodes(condition2);
-/*
-await nodeManager.Execute("Hello Friend", async (value,node) =>
+
+await nodeManager.Execute("Start", async (value, node) =>
 {
     if (node is ConditionNode)
         return;
 
-    Console.WriteLine(node.Name + ": " + value + " == " + node.Guid.ToString());
-});*/
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.Write(node.Name + ": ");
+    Console.ForegroundColor = ConsoleColor.White;
+
+    Console.WriteLine(value);
+});
 
 
 Console.ReadKey();

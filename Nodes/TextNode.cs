@@ -12,7 +12,7 @@ namespace NodeSystem.Nodes
     {
 
 
-        public override Type[] InputTypes { get; } = new Type[] { typeof(string) };
+        public override Type[] InputTypes { get; } = new Type[] { typeof(object) };
         public override Type[] OutputTypes { get; } = new Type[] { typeof(string) };
 
         public new Func<object, Task<string>>? Process { get; set; } = (v) =>

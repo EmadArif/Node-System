@@ -93,12 +93,12 @@ namespace NodeSystem.Nodes
             return false; // لا توجد دورة نهائية
         }
 
-        public void DrawConnectedNodes(INode node)
+        public void DrawConnectedNodes(INode node, bool details = false)
         {
-            DetectInfiniteLoop(node);
+            DetectInfiniteLoop(node, details);
         }
 
-        private bool DetectInfiniteLoop(INode node, int depth = 0, Dictionary<Guid, int>? visitedNodes = null, HashSet<Guid>? activeNodes = null)
+        private bool DetectInfiniteLoop(INode node, bool details = false, int depth = 0, Dictionary<Guid, int>? visitedNodes = null, HashSet<Guid>? activeNodes = null)
         {
             // إنشاء القاموس والمجموعة عند الاستدعاء الأول
             if (visitedNodes == null)
@@ -135,7 +135,10 @@ namespace NodeSystem.Nodes
             // طباعة اسم العقدة
             GenerateSpaces(depth);
             Console.Write("-");
-            Console.WriteLine(node.Name);
+            if (details)
+                Console.WriteLine(node.Name.PadRight(10) + node.Guid);
+            else
+                Console.WriteLine(node.Name);
 
             // معالجة العقدة حسب نوعها
             if (node is ConditionNode condNode)
@@ -148,7 +151,7 @@ namespace NodeSystem.Nodes
 
                 foreach (INode n in condNode.TrueNodes)
                 {
-                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                    if (DetectInfiniteLoop(n, details, depth + 1, visitedNodes, activeNodes))
                         return true;
                 }
 
@@ -161,7 +164,7 @@ namespace NodeSystem.Nodes
 
                 foreach (INode n in condNode.FalseNodes)
                 {
-                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                    if (DetectInfiniteLoop(n, details, depth + 1, visitedNodes, activeNodes))
                         return true;
                 }
 
@@ -171,7 +174,7 @@ namespace NodeSystem.Nodes
                 // العقد المتصلة عبر المخرجات
                 foreach (INode n in node.Outputs)
                 {
-                    if (DetectInfiniteLoop(n, depth + 1, visitedNodes, activeNodes))
+                    if (DetectInfiniteLoop(n, details, depth + 1, visitedNodes, activeNodes))
                         return true;
                 }
             }
@@ -226,27 +229,6 @@ namespace NodeSystem.Nodes
             }
             while (IsLoop);
             Console.WriteLine("End");
-        }
-
-        public struct DepthData
-        {
-            public string Guids;
-            public int Depth;
-
-            public DepthData(string guids, int depth)
-            {
-                Guids = guids;
-                Depth = depth;
-            }
-            public static bool operator ==(DepthData p1, DepthData p2)
-            {
-                return p1.Guids == p2.Guids && p1.Depth == p2.Depth;
-            }
-
-            public static bool operator !=(DepthData p1, DepthData p2)
-            {
-                return !(p1 == p2);
-            }
         }
 
     }

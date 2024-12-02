@@ -25,7 +25,7 @@ namespace NodeSystem.Nodes
             }
         }
 
-        public ConditionNode(string name) : base(name)
+        public ConditionNode(string? name) : base(name ?? "Condition")
         {
 
         }

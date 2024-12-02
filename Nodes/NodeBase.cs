@@ -11,6 +11,7 @@ namespace NodeSystem.Nodes
     {
         public Guid Guid { get; set; } = Guid.NewGuid();
         public string Name { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         public abstract Type[]? InputTypes { get; }
         public abstract Type[]? OutputTypes { get; }
@@ -30,7 +31,14 @@ namespace NodeSystem.Nodes
         {
             Name = name;
         }
+        public void DeleteConnection(params INode[] nodes)
+        {
+            foreach (var n in nodes)
+            {
+                Outputs.RemoveAll((x)=>x.Guid == n.Guid);
+            }
 
+        }
         public void AddConnection(params INode[] nodes)
         {
             foreach (var n in nodes)

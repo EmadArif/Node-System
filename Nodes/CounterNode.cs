@@ -18,7 +18,7 @@ namespace NodeSystem.Nodes
             return Task.FromResult(c);
         };
 
-        public CounterNode(string name) : base(name)
+        public CounterNode(string? name) : base(name ?? "Counter")
         {
 
         }

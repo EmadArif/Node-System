@@ -10,6 +10,7 @@ namespace NodeSystem.Nodes
     public interface INode
     {
         public string Name { get; set; }
+        public string Description { get; set; }
         public Guid Guid { get; set; }
         public Type[]? InputTypes { get; }
         public Type[]? OutputTypes { get; }
@@ -25,7 +26,8 @@ namespace NodeSystem.Nodes
                 return Outputs;
             }
         }
-
+        public void AddConnection(params INode[] nodes);
+        public void DeleteConnection(params INode[] nodes);
         public Task Execute(object input);
     }
 }

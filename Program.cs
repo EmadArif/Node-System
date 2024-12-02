@@ -1,6 +1,11 @@
-﻿// See https://aka.ms/new-console-template for more information
-using NodeSystem.Nodes;
+﻿// See https://aka.ms/n;ew-console-template for more information
+using NodeSystem;
 
+
+
+/*
+
+List<INode> allNodes = new List<INode>();
 
 TextNode starterText = new TextNode("starter text");
 TextNode text1 = new TextNode("text1");
@@ -9,6 +14,12 @@ TextNode text3 = new TextNode("text3");
 CounterNode counter = new CounterNode("counter");
 ConditionNode condition1 = new ConditionNode("condition 1");
 ConditionNode condition2 = new ConditionNode("condition 2");
+
+allNodes.Add(text1);
+allNodes.Add(text2);
+allNodes.Add(text3);
+allNodes.Add(condition1);
+allNodes.Add(condition2);
 
 //Override the Process function.
 counter.Process = async (v) =>
@@ -79,9 +90,9 @@ nodeManager.AddNode(condition2);
 nodeManager.AddNode(text1);
 nodeManager.AddNode(text2);
 nodeManager.AddNode(text3);
+*/
 
-
-
+/*
 await nodeManager.Execute("Start", async (value, node) =>
 {
     if (node is ConditionNode)
@@ -92,8 +103,9 @@ await nodeManager.Execute("Start", async (value, node) =>
     Console.ForegroundColor = ConsoleColor.White;
 
     Console.WriteLine(value);
-});
-
+});*/
+SimpleUserSystem s = new SimpleUserSystem();
+await s.Execute();
 
 Console.ReadKey();
 

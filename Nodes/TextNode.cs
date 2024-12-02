@@ -20,7 +20,7 @@ namespace NodeSystem.Nodes
            
             return Task.FromResult(v.ToString());
         };
-        public TextNode(string name) : base(name)
+        public TextNode(string? name) : base(name ?? "Text")
         {
 
         }

@@ -19,7 +19,7 @@ namespace NodeSystem.Commands.Nodes
         };
         public override void Execute(object paramters)
         {
-            if (paramters is not Dictionary<string, string>)
+            if (paramters is not Dictionary<string, string> || paramters == null)
             {
                 return;
             }
@@ -72,11 +72,6 @@ namespace NodeSystem.Commands.Nodes
                 }
             }
 
-        }
-
-        public override bool ValidateName(string cmdName)
-        {
-            return string.IsNullOrEmpty(cmdName);
         }
     }
 }

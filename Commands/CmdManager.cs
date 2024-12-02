@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace NodeSystem.Commands
@@ -73,13 +74,10 @@ namespace NodeSystem.Commands
         public static (Dictionary<string, string>, List<ICommand>) ExtractCommands(string cmdText)
         {
             List<ICommand> result = new ();
-            string[] names = cmdText.Split(' ');
 
-            string baseName = names.First();
             List<string> noneArguments = new () { "?" };
 
-            var allArgs = cmdText.ExtractAnyArguments(noneArguments, baseName);
-                
+            var allArgs = cmdText.ExtractAnyArguments(noneArguments);
             var variableArgsMap = allArgs.Where(x => x.ArgType == ArgumentType.VARIABLE).ToDictionary(
                                 kvp => kvp.Key.Replace("--", string.Empty), // Transform the key
                                 kvp => kvp.Value          // Keep the value as is
@@ -92,6 +90,7 @@ namespace NodeSystem.Commands
                                kvp => kvp.Key.Replace("--", string.Empty), // Transform the key
                                kvp => kvp.Value          // Keep the value as is
                            );
+            string baseName = cmdText.Substring(0, cmdText.IndexOf(" ") == -1 ? cmdText.Length : cmdText.IndexOf(" ")).Trim();
 
             List<string> inputs = new()
             {
@@ -260,9 +259,9 @@ namespace NodeSystem.Commands
             }
         }
 
-        public static List<Argument> ExtractAnyArguments(this string cmd, List<string> noneArguments, string cmdBaseName)
+        public static List<Argument> ExtractAnyArguments(this string cmd, List<string> noneArguments)
         {
-            string[] arrArgs = cmd.Split(" ");
+            string[] arrArgs = Regex.Replace(cmd.Trim(), @"\s+", ",").Split(',');
 
             List<Argument> argResult = new List<Argument>();
             int paramIndex = 0;

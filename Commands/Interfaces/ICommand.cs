@@ -14,7 +14,6 @@ namespace NodeSystem.Commands
         public List<CliArgument>? Arguments { get; }
         public string Description { get; }
         void Execute(object paramters);
-        bool ValidateName(string cmdName);
         void DisplayArgsInfo();
         string? ValidateArgs(string[] insertedArgs);
         void ValidateArgs(Dictionary<string, string> insertedArgs);

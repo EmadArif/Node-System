@@ -22,10 +22,5 @@ namespace NodeSystem.Commands
             }
             Console.Clear();
         }
-
-        public override bool ValidateName(string cmdName)
-        {
-            return string.IsNullOrEmpty(cmdName);
-        }
     }
 }

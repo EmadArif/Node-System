@@ -192,10 +192,5 @@ namespace NodeSystem.Commands
                 Console.WriteLine("");
             }
         }
-
-        public override bool ValidateName(string name)
-        {
-            return name.StartsWith("nodes");
-        }
     }
 }

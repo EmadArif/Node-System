@@ -10,7 +10,7 @@ namespace NodeSystem.Commands.Nodes
 {
     public class CreateNodeCommand : CommandBase
     {
-        public override string Name => "new";
+        public override string Name => "create";
 
         public override string Description => "Create a new node";
         public override List<CliArgument> Arguments => new()
@@ -54,13 +54,8 @@ namespace NodeSystem.Commands.Nodes
                 {
                     DisplayArgsInfo();
                 }
-                return;
             }
         }
 
-        public override bool ValidateName(string cmdName)
-        {
-            return string.IsNullOrEmpty(cmdName);
-        }
     }
 }

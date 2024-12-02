@@ -21,7 +21,6 @@ namespace NodeSystem.Commands
         public virtual List<CliArgument>? RequiredArgs { get => Arguments?.Where(x => !x.IsOptional).ToList(); }
 
         public abstract void Execute(object paramters);
-        public abstract bool ValidateName(string cmdName);
 
         public void DisplayArgsInfo()
         {

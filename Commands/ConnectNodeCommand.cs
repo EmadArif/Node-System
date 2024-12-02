@@ -91,10 +91,5 @@ namespace NodeSystem.Commands
             }
            
         }
-
-        public override bool ValidateName(string cmdName)
-        {
-            return cmdName.StartsWith("connect");
-        }
     }
 }

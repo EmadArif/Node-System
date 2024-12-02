@@ -55,9 +55,5 @@ namespace NodeSystem.Commands
                 }
             }
         }
-        public override bool ValidateName(string name)
-        {
-            return name == "help" || name.StartsWith("help ");
-        }
     }
 }

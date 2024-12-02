@@ -124,11 +124,5 @@ namespace NodeSystem.Commands
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine($")");
         }
-
-
-        public override bool ValidateName(string cmdName)
-        {
-            return cmdName.StartsWith("set-node");
-        }
     }
 }

@@ -77,9 +77,5 @@ namespace NodeSystem.Commands
 
             return;
         }
-        public override bool ValidateName(string cmdName)
-        {
-            return cmdName.StartsWith("draw");
-        }
     }
 }

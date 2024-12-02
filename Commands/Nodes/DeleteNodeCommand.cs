@@ -35,10 +35,5 @@ namespace NodeSystem.Commands.Nodes
                 }
             }
         }
-
-        public override bool ValidateName(string cmdName)
-        {
-            return string.IsNullOrEmpty(cmdName);
-        }
     }
 }

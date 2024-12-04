@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -31,9 +33,9 @@ namespace NodeSystem.Commands
 
             if (optArgs != null && optArgs.ContainsKey("a"))
             {
-                if(CmdManager.SelectedNode != null)
+                if(CliManager.Shared.SelectedNode != null)
                 {
-                    DrawNodeTree(CmdManager.SelectedNode, true);
+                    DrawNodeTree(CliManager.Shared.SelectedNode, true);
                 }
                 else
                 {
@@ -44,7 +46,7 @@ namespace NodeSystem.Commands
             {
                 var name = optArgs["node"];
 
-                var nodes = CmdManager.GetAllNodes();
+                var nodes = CliManager.Shared.Nodes;
                 INode? selectedNode = nodes.FirstOrDefault(x => x.Name.ToLower().Equals(name.ToLower()));
                 if (selectedNode == null)
                 {
@@ -56,12 +58,12 @@ namespace NodeSystem.Commands
             }
             else
             {
-                if (CmdManager.SelectedNode == null)
+                if (CliManager.Shared.SelectedNode == null)
                 {
                     Console.WriteLine($"No Selected node.");
                     return;
                 }
-                DrawNodeTree(CmdManager.SelectedNode);
+                DrawNodeTree(CliManager.Shared.SelectedNode);
 
             }
 

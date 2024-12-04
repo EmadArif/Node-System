@@ -1,4 +1,5 @@
 ﻿using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -33,23 +34,25 @@ namespace NodeSystem.Commands
                 {
                     if(args["a"] == "all")
                     {
-                        foreach (var cmd in CliManager.AllCommands)
+                        foreach (var cli in CliHandler.Commands)
                         {
-                            cmd.DisplayArgsInfo();
+                            if(cli.Cmd != null)
+                                cli.Cmd.DisplayArgsInfo();
                         }
                     }
                     else if(args["a"] == "less")
                     {
-                        foreach (var cmd in CliManager.AllCommands)
+                        foreach (var cli in CliHandler.Commands)
                         {
-                            Console.WriteLine("Command: " + cmd.Name.ToUpper().PadRight(42) + $" ({cmd.Description})");
+                            Console.WriteLine("Command: " + cli.Name.ToUpper().PadRight(42) + $" {cli.Description}");
                         }
                     }
                     else
                     {
-                        foreach (var cmd in CliManager.AllCommands.Where(x => x.Name.ToLower().Equals(args["a"])))
+                        foreach (var cli in CliHandler.Commands.Where(x => x.Name.ToLower().Equals(args["a"])))
                         {
-                            cmd.DisplayArgsInfo();
+                            if(cli.Cmd != null)
+                                cli.Cmd.DisplayArgsInfo();
                         }
                     }
                 }

@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -11,7 +13,7 @@ namespace NodeSystem.Commands
 {
     public class NodesListCommand : CommandBase
     {
-        public override string Name => "list";
+        public override string Name => "nodes";
         public override string Description => "Show all created nodes";
         public override List<CliArgument> Arguments => new()
         {
@@ -34,23 +36,23 @@ namespace NodeSystem.Commands
                 string value = args["ls"];
                 if (value.ToLower() == "all")
                 {
-                    nodes = CmdManager.CreatedNodes;
+                    nodes = CliManager.Shared.CreatedNodes;
                 }
                 else if (value.ToLower() == "selected")
                 {
-                    if (CmdManager.SelectedNode == null)
+                    if (CliManager.Shared.SelectedNode == null)
                     {
                         Console.WriteLine("There is no selected node.");
                         return;
                     }
                     else
                     {
-                        nodes.Add(CmdManager.SelectedNode);
+                        nodes.Add(CliManager.Shared.SelectedNode);
                     }
                 }
                 else
                 {
-                    nodes = CmdManager.CreatedNodes.Where(x => x.Name.ToLower() == value.ToLower()).ToList();
+                    nodes = CliManager.Shared.CreatedNodes.Where(x => x.Name.ToLower() == value.ToLower()).ToList();
                 }
 
                 DisplayNodes(nodes);
@@ -68,19 +70,19 @@ namespace NodeSystem.Commands
             if (optArgs != null && optArgs.ContainsKey("d"))
             {
                 string id = optArgs["d"];
-                if (CmdManager.DeleteCreatedNodeById(id))
+                if (CliManager.DeleteCreatedNodeById(id))
                 {
                     Console.WriteLine($"Node with Id (${id}) has been deleted.");
                 }
             }
             if (optArgs != null && optArgs.ContainsKey("new"))
             {
-                INode? n = CmdManager.CreateNodeByName(optArgs["new"]);
+                INode? n = CliManager.CreateNodeByName(optArgs["new"]);
                 if(n != null && optArgs.ContainsKey("n"))
                 {
                     n.Name = optArgs["n"].ToLower();
                 }
-                DisplayNodes(CmdManager.CreatedNodes);
+                DisplayNodes(CliManager.Shared.CreatedNodes);
 
             }
             if (optArgs != null && optArgs.ContainsKey("ls"))
@@ -90,23 +92,23 @@ namespace NodeSystem.Commands
                 string value = optArgs["ls"];
                 if (value.ToLower() == "all")
                 {
-                    nodes = CmdManager.CreatedNodes;
+                    nodes = CliManager.Shared.CreatedNodes;
                 }
                 else if (value.ToLower() == "selected")
                 {
-                    if (CmdManager.SelectedNode == null)
+                    if (CliManager.Shared.SelectedNode == null)
                     {
                         Console.WriteLine("There is no selected node.");
                         return;
                     }
                     else
                     {
-                        nodes.Add(CmdManager.SelectedNode);
+                        nodes.Add(CliManager.Shared.SelectedNode);
                     }
                 }
                 else
                 {
-                    nodes = CmdManager.CreatedNodes.Where(x => x.Name.ToLower() == value.ToLower()).ToList();
+                    nodes = CliManager.Shared.CreatedNodes.Where(x => x.Name.ToLower() == value.ToLower()).ToList();
                 }
 
                 DisplayNodes(nodes);
@@ -114,7 +116,7 @@ namespace NodeSystem.Commands
             else if(optArgs == null || optArgs.Count == 0)
             {
                 Console.WriteLine("-----------------");
-                foreach (var n in CmdManager.GetAllNodes())
+                foreach (var n in CliManager.Shared.Nodes)
                 {
                     Console.WriteLine(n.Name.ToUpper().PadRight(40) + n.Description);
                 }
@@ -122,7 +124,7 @@ namespace NodeSystem.Commands
             }
             if (optArgs != null && optArgs.ContainsKey("i"))
             {
-                INode? node = CmdManager.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == optArgs["i"].ToLower());
+                INode? node = CliManager.Shared.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == optArgs["i"].ToLower());
                 if(node != null)
                 {
                     ShowNodeInfo(node);
@@ -135,11 +137,9 @@ namespace NodeSystem.Commands
             Console.WriteLine("-----------------");
             foreach (var n in nodes)
             {
-                if (CmdManager.SelectedNode != null && n.Guid == CmdManager.SelectedNode.Guid)
+                if (CliManager.Shared.SelectedNode != null && n.Guid == CliManager.Shared.SelectedNode.Guid)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(n.Name.PadRight(30) + n.Guid);
-                    Console.ForegroundColor = ConsoleColor.White;
+                    CliConsole.WriteLineSuccess(n.Name.PadRight(30) + n.Guid);
                 }
                 else
                 {

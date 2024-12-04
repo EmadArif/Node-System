@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -29,7 +31,7 @@ namespace NodeSystem.Commands
 
             string? cmdText = ((string)paramters).ToLower();
 
-            if (CmdManager.SelectedNode == null)
+            if (CliManager.Shared.SelectedNode == null)
             {
                 Console.WriteLine("There is no selected node.");
                 return;
@@ -43,7 +45,7 @@ namespace NodeSystem.Commands
 
                 if (optArgs.ContainsKey("new"))
                 {
-                    INode? node = CmdManager.CreateNodeByName(optArgs["to"]);
+                    INode? node = CliManager.CreateNodeByName(optArgs["to"]);
                     if(node != null)
                     {
                         if (optArgs.ContainsKey("n"))
@@ -51,8 +53,8 @@ namespace NodeSystem.Commands
 
                         childNode = node;
 
-                        CmdManager.SelectedNode.AddConnection(childNode);
-                        new NodeManager().DrawConnectedNodes(CmdManager.SelectedNode);
+                        CliManager.Shared.SelectedNode?.AddConnection(childNode);
+                        new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode);
                     }
                     else
                     {
@@ -63,24 +65,24 @@ namespace NodeSystem.Commands
                 {
                     string nodeNameOrId = optArgs["to"];
 
-                    childNode = CmdManager.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == nodeNameOrId.ToLower() || x.Name.ToLower() == nodeNameOrId.ToLower());
+                    childNode = CliManager.Shared.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == nodeNameOrId.ToLower() || x.Name.ToLower() == nodeNameOrId.ToLower());
                     if (childNode == null)
                     {
                         Console.WriteLine($"Node ({nodeNameOrId}) is not exists.");
                         return;
                     }
 
-                    CmdManager.SelectedNode.AddConnection(childNode);
-                    new NodeManager().DrawConnectedNodes(CmdManager.SelectedNode);
+                    CliManager.Shared.SelectedNode.AddConnection(childNode);
+                    new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode);
                 }
                 else if (optArgs.ContainsKey("d"))
                 {
                     string id = optArgs["d"];
-                    bool deleted = CmdManager.DeleteConnectionFromSelected(id);
+                    bool deleted = CliManager.DeleteConnectionFromSelected(id);
                     if(deleted)
                     {
                         Console.WriteLine($"Node with Id:({id}) is deleted from connection.");
-                        new NodeManager().DrawConnectedNodes(CmdManager.SelectedNode);
+                        new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode);
 
                     }
                     else

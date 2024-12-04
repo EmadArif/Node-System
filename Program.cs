@@ -104,7 +104,7 @@ await nodeManager.Execute("Start", async (value, node) =>
 
     Console.WriteLine(value);
 });*/
-SimpleUserSystem s = new SimpleUserSystem();
+CliExecuter s = new CliExecuter();
 await s.Execute();
 
 Console.ReadKey();

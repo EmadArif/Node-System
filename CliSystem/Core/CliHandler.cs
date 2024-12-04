@@ -1,13 +1,12 @@
-﻿using NodeSystem.Commands.Nodes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.CliSystem.Data;
+using NodeSystem.Commands.Data;
+using NodeSystem.Commands.Nodes;
+using System.Text.RegularExpressions;
 
 namespace NodeSystem.Commands.Base
 {
-    public static class CliManager
+    public static class CliHandler
     {
 
         public static readonly List<CliCommand> Commands = new ()
@@ -65,6 +64,7 @@ namespace NodeSystem.Commands.Base
                 return _allCommands;
             }
         }
+
         public static List<ICommand> GetCommandsByBaseName(string baseName)
         {
             var baseCommand = Commands.FirstOrDefault(cmd => baseName.Equals(cmd.Name, StringComparison.OrdinalIgnoreCase));
@@ -138,9 +138,7 @@ namespace NodeSystem.Commands.Base
 
                                 if(message != null)
                                 {
-                                    Console.ForegroundColor = ConsoleColor.DarkRed;
-                                    Console.WriteLine(message);
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    CliConsole.WriteLineError(message);
 
                                 }
                                 break;
@@ -163,11 +161,11 @@ namespace NodeSystem.Commands.Base
                     break;
                 }
             }
-            if (paramters.Count > 0 && cmds.Count == 0)
+         /*   if (paramters.Count > 0 && cmds.Count == 0)
             {
                 string g = string.Join("->", paramters);
                 Console.WriteLine($"[{g}] is not recognized as command.");
-            }
+            }*/
 
             return cmds;
         }
@@ -197,6 +195,7 @@ namespace NodeSystem.Commands.Base
             // Check if all target argument names exist in the source
             return target.All(targArg => sourceNames.Contains(targArg.Name));
         }
+
 
     }
 }

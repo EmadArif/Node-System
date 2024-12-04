@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -29,9 +31,13 @@ namespace NodeSystem.Commands.Nodes
             if (args != null && args.ContainsKey("d"))
             {
                 string id = args["d"];
-                if (CmdManager.DeleteCreatedNodeById(id))
+                if (CliManager.DeleteCreatedNodeById(id))
                 {
                     Console.WriteLine($"Node with Id ({id}) has been deleted.");
+                }
+                else
+                {
+                    CliConsole.WriteLineError($"Node with Id ({id}) is not exists");
                 }
             }
         }

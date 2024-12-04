@@ -1,4 +1,5 @@
 ﻿using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,7 +139,7 @@ namespace NodeSystem.Commands
                         $"Argument {item.Name.ToUpper()} missing value".PadRight(40) + $"{item.Description}"
                     );
                     missingArgumentsText.AppendLine(
-                       $"Accepted values:\n {string.Join("\n ", item.Values)}"
+                       $"Accepted values:\n {(item.Values == null ? "NULL" : string.Join("\n ", item.Values ))}"
                    );
                 }
             }

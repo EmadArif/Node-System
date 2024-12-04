@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ namespace NodeSystem.Commands.Nodes
         };
         public override void Execute(object paramters)
         {
-            if (paramters is not Dictionary<string, string>)
+            if (paramters is not Dictionary<string, string> || paramters == null)
             {
                 return;
             }
@@ -30,7 +32,7 @@ namespace NodeSystem.Commands.Nodes
 
             if(args.ContainsKey("new"))
             {
-                INode? n = CmdManager.CreateNodeByName(args["new"]);
+                INode? n = CliManager.CreateNodeByName(args["new"]);
                 if (n != null && args.ContainsKey("n"))
                 {
                     n.Name = args["n"].ToLower();
@@ -38,21 +40,16 @@ namespace NodeSystem.Commands.Nodes
 
                 if(n != null)
                 {
-
                     Console.Write($"new Node (");
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write($"{n.Name}");
-                    Console.ForegroundColor = ConsoleColor.White;
-
+                    CliConsole.WriteSuccess(n.Name);
                     Console.Write($") is created with ID (");
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write($"${n.Guid}");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    CliConsole.WriteSuccess(n.Guid);
                     Console.WriteLine($")");
                 }
                 else
                 {
-                    DisplayArgsInfo();
+                    CliConsole.WriteLineWarning($"Node with name {args["new"]} not found!");
+
                 }
             }
         }

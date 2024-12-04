@@ -20,6 +20,7 @@ namespace NodeSystem.Commands
             {
                 return;
             }
+
             Console.Clear();
         }
     }

@@ -1,4 +1,6 @@
-﻿using NodeSystem.Commands.Base;
+﻿using NodeSystem.CliSystem.Core;
+using NodeSystem.Commands.Base;
+using NodeSystem.Commands.Data;
 using NodeSystem.Nodes;
 using System;
 using System.Collections.Generic;
@@ -28,7 +30,7 @@ namespace NodeSystem.Commands.Nodes
 
             if (args != null && args.ContainsKey("i"))
             {
-                INode? node = CmdManager.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == args["i"].ToLower());
+                INode? node = CliManager.Shared.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == args["i"].ToLower());
                
                 if (node != null)
                 {

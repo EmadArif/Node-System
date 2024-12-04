@@ -26,106 +26,120 @@ namespace NodeSystem.CliSystem.Core
             HashSet<CliKeyword> keywords = GetKeywords(commands);
             string typedText = string.Empty;
             const string prompt = "CMD>";
+            int cursorPosition = 0; // Track cursor position for arrow key navigation
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write(prompt); // Display the initial prompt
-            
+
             while (true)
             {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(intercept: true); // Read key without displaying it
 
                 if (keyInfo.Key == ConsoleKey.Tab)
                 {
+                    // Autocomplete logic
                     foreach (var item in keywords)
                     {
                         var words = typedText.Split(' ');
-                        if(words.Length > 0)
+                        if (words.Length > 0)
                         {
                             string lastWord = words[words.Length - 1].Trim();
-                            if (item.Name != lastWord && lastWord != string.Empty && item.Name.Contains(lastWord))
+                            if (item.Name != lastWord && lastWord != string.Empty && item.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase))
                             {
-                                words[words.Length - 1] = item.Name;
-                                typedText = string.Join(' ', words);
-                                typedText += " ";
-                                ResetCmdText(prompt);
-                                HighlightKeywords(typedText, keywords);
+                                words[words.Length - 1] = item.Name; // Replace the last word with the suggestion
+                                typedText = string.Join(' ', words) + " ";
+                                cursorPosition = typedText.Length;
 
+                                ResetCmdText(prompt);
+                                HighlightKeywords(typedText, keywords, cursorPosition);
                                 break;
                             }
                         }
-                        
                     }
-                }
-
-                if (keyInfo.Key == ConsoleKey.DownArrow)
-                {
-                    if (savedInputIndex - 1 >= 0)
-                    {
-                        typedText = savedInputs[savedInputIndex-1];
-                        savedInputIndex--;
-                    }
-                    else
-                    {
-                        typedText = string.Empty;
-                        savedInputIndex = -1;
-                    }
-
-                    ResetCmdText(prompt);
-                    HighlightKeywords(typedText, keywords);
                 }
                 else if (keyInfo.Key == ConsoleKey.UpArrow)
                 {
+                    // Handle history navigation (Up arrow)
                     if (savedInputIndex + 1 < savedInputs.Count)
                     {
-                        typedText = savedInputs[savedInputIndex+1];
                         savedInputIndex++;
-                        ResetCmdText(prompt);
+                        typedText = savedInputs[savedInputIndex];
+                        cursorPosition = typedText.Length;
 
-                        HighlightKeywords(typedText, keywords);
+                        ResetCmdText(prompt);
+                        HighlightKeywords(typedText, keywords, cursorPosition);
                     }
                 }
-
-                if (!ValidateChar(keyInfo.KeyChar))
-                    continue;
-                
-                if (keyInfo.Key == ConsoleKey.Enter)
+                else if (keyInfo.Key == ConsoleKey.DownArrow)
                 {
+                    // Handle history navigation (Down arrow)
+                    if (savedInputIndex > 0)
+                    {
+                        savedInputIndex--;
+                        typedText = savedInputs[savedInputIndex];
+                    }
+                    else
+                    {
+                        savedInputIndex = -1;
+                        typedText = string.Empty;
+                    }
+
+                    cursorPosition = typedText.Length;
+                    ResetCmdText(prompt);
+                    HighlightKeywords(typedText, keywords, cursorPosition);
+                }
+                else if (keyInfo.Key == ConsoleKey.LeftArrow)
+                {
+                    // Move cursor left
+                    if (cursorPosition > 0)
+                    {
+                        cursorPosition--;
+                        Console.SetCursorPosition(prompt.Length + cursorPosition, Console.CursorTop);
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.RightArrow)
+                {
+                    // Move cursor right
+                    if (cursorPosition < typedText.Length)
+                    {
+                        cursorPosition++;
+                        Console.SetCursorPosition(prompt.Length + cursorPosition, Console.CursorTop);
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    // Handle Enter key: finalize input
                     Console.WriteLine();
                     Console.ForegroundColor = ConsoleColor.White;
                     savedInputs.Add(typedText);
-                    break;
+                    return typedText;
                 }
                 else if (keyInfo.Key == ConsoleKey.Backspace)
                 {
-                    if (typedText.Length > 0)
+                    // Handle Backspace: remove character before the cursor
+                    if (cursorPosition > 0)
                     {
-                        // Handle Backspace: remove the last character
-                        typedText = typedText.Substring(0, typedText.Length - 1);
-
-                        // Remove last character from the console
-                        Console.Write("\b \b");
+                        typedText = typedText.Remove(cursorPosition - 1, 1);
+                        cursorPosition--;
 
                         ResetCmdText(prompt);
-                        HighlightKeywords(typedText, keywords);
+                        HighlightKeywords(typedText, keywords, cursorPosition);
                     }
                 }
                 else
                 {
+                    // Handle regular character input
+                    char inputChar = keyInfo.KeyChar;
+                    if (ValidateChar(inputChar))
+                    {
+                        typedText = typedText.Insert(cursorPosition, inputChar.ToString());
+                        cursorPosition++;
 
-                    // Append the key character to the typed text
-                    typedText += keyInfo.KeyChar;
-                    typedText = typedText.ToLower();
-
-                    ResetCmdText(prompt);
-
-                    HighlightKeywords(typedText, keywords);
-
-                    // Reset color at the end
-                    Console.ResetColor();
+                        ResetCmdText(prompt);
+                        HighlightKeywords(typedText, keywords, cursorPosition);
+                    }
                 }
             }
-
-            return typedText;
         }
 
         private static void ResetCmdText(string baseText)
@@ -176,7 +190,7 @@ namespace NodeSystem.CliSystem.Core
             return keywords;
         }
 
-        private static void HighlightKeywords(string input, HashSet<CliKeyword> keywords)
+        private static void HighlightKeywords(string input, HashSet<CliKeyword> keywords, int cursorPosition)
         {
             // Split the input into words and track positions
             var words = input.Split(new[] { ' ' }, StringSplitOptions.None);
@@ -211,6 +225,8 @@ namespace NodeSystem.CliSystem.Core
 
             // Reset color at the end
             Console.ResetColor();
+            Console.SetCursorPosition("CMD>".Length + cursorPosition, Console.CursorTop); // Reposition cursor
+
         }
 
         public static (Dictionary<string, string>?, List<ICommand>?) ExtractCommands(string cmdText)
@@ -302,22 +318,7 @@ namespace NodeSystem.CliSystem.Core
                 Console.WriteLine($"{cmdText} is not recognized as command.");
                 return (null, null);
             }
-
-            if (baseArgsMap.Any() && noneArguments.Contains(baseArgsMap.First().Value))
-            {
-                var cmdByNames = CliHandler.GetCommandsByBaseName(baseArgsMap.Keys.First());
-                foreach (var cmd in cmdByNames)
-                {
-                    cmd.DisplayArgsInfo();
-                }
-                if (!cmdByNames.Any())
-                {
-                    Console.WriteLine($"{cmdText} is not recognized as command.");
-                }
-
-                return (null, null);
-            }
-            else if (namesArgsMap.Count > 0)
+            if (namesArgsMap.Count > 0)
             {
                 var cmdByNames = CliHandler.GetSubCommandsBaseName(baseName, namesArgsMap.Keys.ToList());
 
@@ -326,6 +327,27 @@ namespace NodeSystem.CliSystem.Core
                     cmd.DisplayArgsInfo();
                 }
             }
+            else if (baseArgsMap.Any() && noneArguments.Contains(baseArgsMap.First().Value))
+            {
+                var cmdByNames = CliHandler.GetCommandsByBaseName(baseName);
+
+                foreach (var cmd in cmdByNames)
+                {
+                    cmd.DisplayArgsInfo();
+                }
+                if (!cmdByNames.Any())
+                {
+                    var baseCmd = CliHandler.Commands.FirstOrDefault(x => x.Cmd != null && x.Cmd.Name.ToLower() == baseName);
+                    if (baseCmd != null)
+                    {
+                        baseCmd.Cmd.DisplayArgsInfo();
+                    }else
+                    Console.WriteLine($"{cmdText} is not recognized as command.");
+                }
+
+                return (null, null);
+            }
+            
 
             var resultArgs = processedArgs.ToDictionary(
                                 kvp => kvp.Key.Replace("--", string.Empty), // Transform the key

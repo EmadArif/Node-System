@@ -24,12 +24,10 @@ namespace NodeSystem.Commands
 
         public override void Execute(object paramters)
         {
-            if (paramters is not string)
+            if (paramters is not Dictionary<string, string> || paramters == null)
             {
                 return;
             }
-
-            string? cmdText = ((string)paramters).ToLower();
 
             if (CliManager.Shared.SelectedNode == null)
             {
@@ -37,33 +35,36 @@ namespace NodeSystem.Commands
                 return;
             }
 
-            var optArgs = cmdText.ExtractArguments(Name, OptionalArgs);
+            var args = (Dictionary<string, string>)paramters;
 
-            if(optArgs != null)
+            if (args != null)
             {
                 INode? childNode;
 
-                if (optArgs.ContainsKey("new"))
+                if (args.ContainsKey("new"))
                 {
-                    INode? node = CliManager.CreateNodeByName(optArgs["to"]);
+                    INode? node = CliManager.CreateNodeByName(args["to"]);
                     if(node != null)
                     {
-                        if (optArgs.ContainsKey("n"))
-                            node.Name = optArgs["n"];
+                        if (args.ContainsKey("n"))
+                            node.Name = args["n"];
 
                         childNode = node;
-
-                        CliManager.Shared.SelectedNode?.AddConnection(childNode);
-                        new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode);
+                        if(CliManager.Shared.SelectedNode != null)
+                        {
+                            CliManager.Shared.SelectedNode?.AddConnection(childNode);
+                            new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode!);
+                        }
+                     
                     }
                     else
                     {
-                        Console.WriteLine($"Node ({optArgs["new"]}) is not exists.");
+                        Console.WriteLine($"Node ({args["new"]}) is not exists.");
                     }
                 }
-                else if (optArgs.ContainsKey("to"))
+                else if (args.ContainsKey("to"))
                 {
-                    string nodeNameOrId = optArgs["to"];
+                    string nodeNameOrId = args["to"];
 
                     childNode = CliManager.Shared.CreatedNodes.FirstOrDefault(x => x.Guid.ToString().ToLower() == nodeNameOrId.ToLower() || x.Name.ToLower() == nodeNameOrId.ToLower());
                     if (childNode == null)
@@ -75,9 +76,9 @@ namespace NodeSystem.Commands
                     CliManager.Shared.SelectedNode.AddConnection(childNode);
                     new NodeManager().DrawConnectedNodes(CliManager.Shared.SelectedNode);
                 }
-                else if (optArgs.ContainsKey("d"))
+                else if (args.ContainsKey("d"))
                 {
-                    string id = optArgs["d"];
+                    string id = args["d"];
                     bool deleted = CliManager.DeleteConnectionFromSelected(id);
                     if(deleted)
                     {

@@ -12,7 +12,7 @@ namespace NodeSystem.Commands
 {
     internal class DisplayNodeTreeCommand : CommandBase
     {
-        public override string Name => "DRAW";
+        public override string Name => "draw";
 
         public override string Description => "Draw the full path of the selected node.";
         public override List<CliArgument> Arguments => new()
@@ -23,15 +23,14 @@ namespace NodeSystem.Commands
 
         public override void Execute(object paramters)
         {
-            if (paramters is not string)
+            if (paramters is not Dictionary<string, string> || paramters == null)
             {
                 return;
             }
 
-            string? cmdText = ((string)paramters).ToLower();
-            var optArgs = cmdText.ExtractArguments(Name, OptionalArgs);
+            var args = (Dictionary<string, string>)paramters;
 
-            if (optArgs != null && optArgs.ContainsKey("a"))
+            if (args != null && args.ContainsKey("a"))
             {
                 if(CliManager.Shared.SelectedNode != null)
                 {
@@ -42,11 +41,11 @@ namespace NodeSystem.Commands
                     Console.WriteLine($"No Selected node.");
                 }
             }
-            else if (optArgs != null && optArgs.ContainsKey("node"))
+            else if (args != null && args.ContainsKey("node"))
             {
-                var name = optArgs["node"];
+                var name = args["node"];
 
-                var nodes = CliManager.Shared.Nodes;
+                var nodes = CliManager.Shared.CreatedNodes;
                 INode? selectedNode = nodes.FirstOrDefault(x => x.Name.ToLower().Equals(name.ToLower()));
                 if (selectedNode == null)
                 {

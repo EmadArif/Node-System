@@ -9,7 +9,7 @@ namespace NodeSystem.Commands.Base
     public static class CliHandler
     {
 
-        public static readonly List<CliCommand> Commands = new ()
+        public static readonly List<CliCommand> Commands = new()
         {
 
             //Nodes List Command
@@ -33,6 +33,16 @@ namespace NodeSystem.Commands.Base
                 {
                     new SetNodeCommand()
                 }
+            },
+            new CliCommand
+            {
+                Name = "draw",
+                Cmd = new DisplayNodeTreeCommand(),
+            },
+            new CliCommand
+            {
+                Name = "connect",
+                Cmd = new ConnectNodeCommand(),
             },
             //Nodes List Command
             new CliCommand

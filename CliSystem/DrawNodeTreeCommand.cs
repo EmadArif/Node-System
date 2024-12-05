@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 
 namespace NodeSystem.Commands
 {
-    internal class DisplayNodeTreeCommand : CommandBase
+    internal class DrawNodeTreeCommand : CommandBase
     {
         public override string Name => "draw";
 
         public override string Description => "Draw the full path of the selected node.";
         public override List<CliArgument> Arguments => new()
         {
-            new CliArgument { Name = "node", Description = "Display node connection tree", IsOptional = true },
-            new CliArgument { Name = "a", Description = "Display full tree with id", IsOptional = true, StaticValue = "all" },
+            new CliArgument { Name = "node", Description = "Display node connection tree", IsOptional = true, Values = new() { "<NAME>" } },
+            new CliArgument { Name = "a", Description = "Display full tree with id", IsOptional = true, Default = "selected", Values = new() { "selected" , "all" } },
         };
 
         public override void Execute(object paramters)
@@ -32,14 +32,26 @@ namespace NodeSystem.Commands
 
             if (args != null && args.ContainsKey("a"))
             {
-                if(CliManager.Shared.SelectedNode != null)
+                if (args["a"] == "selected")
                 {
-                    DrawNodeTree(CliManager.Shared.SelectedNode, true);
+                    if (CliManager.Shared.SelectedNode != null)
+                    {
+                        DrawNodeTree(CliManager.Shared.SelectedNode, true);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No Selected node.");
+                    }
                 }
-                else
+                else if(args["a"] == "all")
                 {
-                    Console.WriteLine($"No Selected node.");
+                    foreach (var n in CliManager.Shared.CreatedNodes)
+                    {
+                        DrawNodeTree(n, true);
+                        Console.WriteLine();
+                    }
                 }
+                
             }
             else if (args != null && args.ContainsKey("node"))
             {

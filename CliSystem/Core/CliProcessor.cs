@@ -11,6 +11,23 @@ namespace NodeSystem.CliSystem.Core
         private static readonly List<string> noneArguments = new() { "?" };
         private static int savedInputIndex = -1;
         private static readonly List<string> savedInputs = new List<string>();
+        private static HashSet<CliKeyword>? _keywords = null;
+        private const string PROMPT = "CMD>";
+        private static int cursorPositionX = 0; // Track cursor position for arrow key navigation
+        public static string TypedText { get; private set; } = string.Empty;
+
+
+        public static HashSet<CliKeyword> Keywords
+        {
+            get
+            {
+                if(_keywords == null)
+                {
+                    _keywords = GetKeywords(CliHandler.Commands);
+                }
+                return _keywords;
+            }
+        }
 
         private static bool ValidateChar(char c)
         {
@@ -21,15 +38,15 @@ namespace NodeSystem.CliSystem.Core
 
             return false;
         }
-        public static string ProcessInputs(List<CliCommand> commands)
+        public static string ProcessInputs()
         {
-            HashSet<CliKeyword> keywords = GetKeywords(commands);
-            string typedText = string.Empty;
-            const string prompt = "CMD>";
-            int cursorPosition = 0; // Track cursor position for arrow key navigation
+            cursorPositionX = 0;
+            TypedText = string.Empty;
             Console.ResetColor();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write(prompt); // Display the initial prompt
+            Console.Write(PROMPT); // Display the initial prompt
+
+            int currentLine = Console.CursorTop; // Get the current line
 
             while (true)
             {
@@ -37,73 +54,76 @@ namespace NodeSystem.CliSystem.Core
 
                 if (keyInfo.Key == ConsoleKey.Tab)
                 {
-                    // Autocomplete logic
-                    foreach (var item in keywords)
+                    var words = TypedText.Split(' ');
+                    if (words.Length == 0 || words[0] == string.Empty)
+                        continue;
+                    var baseKeywords = Keywords.Where(x => x.CommandName != null && x.CommandName.Contains(words[0]));
+
+                    if(baseKeywords.Any() && words.Length > 0)
                     {
-                        var words = typedText.Split(' ');
-                        if (words.Length > 0)
+                        string lastWord = words[words.Length - 1].Trim();
+                        foreach (var item in baseKeywords)
                         {
-                            string lastWord = words[words.Length - 1].Trim();
                             if (item.Name != lastWord && lastWord != string.Empty && item.Name.StartsWith(lastWord, StringComparison.OrdinalIgnoreCase))
                             {
                                 words[words.Length - 1] = item.Name; // Replace the last word with the suggestion
-                                typedText = string.Join(' ', words) + " ";
-                                cursorPosition = typedText.Length;
+                                TypedText = string.Join(' ', words) + " ";
+                                cursorPositionX = TypedText.Length;
 
-                                ResetCmdText(prompt);
-                                HighlightKeywords(typedText, keywords, cursorPosition);
+                                ResetCmdText();
+                                HighlightKeywords(TypedText, Keywords, cursorPositionX);
                                 break;
                             }
                         }
                     }
+                                      
                 }
                 else if (keyInfo.Key == ConsoleKey.UpArrow)
                 {
                     // Handle history navigation (Up arrow)
-                    if (savedInputIndex + 1 < savedInputs.Count)
-                    {
-                        savedInputIndex++;
-                        typedText = savedInputs[savedInputIndex];
-                        cursorPosition = typedText.Length;
-
-                        ResetCmdText(prompt);
-                        HighlightKeywords(typedText, keywords, cursorPosition);
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.DownArrow)
-                {
-                    // Handle history navigation (Down arrow)
                     if (savedInputIndex > 0)
                     {
                         savedInputIndex--;
-                        typedText = savedInputs[savedInputIndex];
+                        TypedText = savedInputs[savedInputIndex];
                     }
                     else
                     {
                         savedInputIndex = -1;
-                        typedText = string.Empty;
+                        TypedText = string.Empty;
                     }
 
-                    cursorPosition = typedText.Length;
-                    ResetCmdText(prompt);
-                    HighlightKeywords(typedText, keywords, cursorPosition);
+                    cursorPositionX = TypedText.Length;
+                    ResetCmdText();
+                    HighlightKeywords(TypedText, Keywords, cursorPositionX);
+                }
+                else if (keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    if (savedInputIndex + 1 < savedInputs.Count)
+                    {
+                        savedInputIndex++;
+                        TypedText = savedInputs[savedInputIndex];
+                        cursorPositionX = TypedText.Length;
+
+                        ResetCmdText();
+                        HighlightKeywords(TypedText, Keywords, cursorPositionX);
+                    }               
                 }
                 else if (keyInfo.Key == ConsoleKey.LeftArrow)
                 {
                     // Move cursor left
-                    if (cursorPosition > 0)
+                    if (cursorPositionX > 0)
                     {
-                        cursorPosition--;
-                        Console.SetCursorPosition(prompt.Length + cursorPosition, Console.CursorTop);
+                        cursorPositionX--;
+                        Console.SetCursorPosition(cursorPositionX, Math.Max(0, Console.CursorTop)); 
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.RightArrow)
                 {
                     // Move cursor right
-                    if (cursorPosition < typedText.Length)
+                    if (cursorPositionX < TypedText.Length)
                     {
-                        cursorPosition++;
-                        Console.SetCursorPosition(prompt.Length + cursorPosition, Console.CursorTop);
+                        cursorPositionX++;
+                        Console.SetCursorPosition(cursorPositionX, Math.Max(0, Console.CursorTop)); 
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.Enter)
@@ -111,43 +131,57 @@ namespace NodeSystem.CliSystem.Core
                     // Handle Enter key: finalize input
                     Console.WriteLine();
                     Console.ForegroundColor = ConsoleColor.White;
-                    savedInputs.Add(typedText);
-                    return typedText;
+
+                    if(TypedText.Length > 0)
+                    {
+                        savedInputs.Add(TypedText);
+                        savedInputIndex = savedInputs.Count;
+                    }
+             
+
+                    return TypedText;
                 }
                 else if (keyInfo.Key == ConsoleKey.Backspace)
                 {
                     // Handle Backspace: remove character before the cursor
-                    if (cursorPosition > 0)
+                    if (cursorPositionX > 0)
                     {
-                        typedText = typedText.Remove(cursorPosition - 1, 1);
-                        cursorPosition--;
+                        TypedText = TypedText.Remove(cursorPositionX - 1, 1);
+                        cursorPositionX--;
 
-                        ResetCmdText(prompt);
-                        HighlightKeywords(typedText, keywords, cursorPosition);
+                        Console.SetCursorPosition(PROMPT.Length, currentLine); // Move to the start of the current line
+                        Console.Write(new string(' ', Console.LargestWindowWidth * 5)); // Clear the line (leave 1 char space to avoid wrap)
+                        Console.SetCursorPosition(0, currentLine); // Reset cursor to the start of t
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.Write(PROMPT); // Clear the line (leave 1 char space to avoid wrap)
+
+                        HighlightKeywords(TypedText, Keywords, cursorPositionX);
                     }
                 }
                 else
                 {
+                    if (TypedText.Length > Console.BufferWidth - 8)
+                        continue;
                     // Handle regular character input
                     char inputChar = keyInfo.KeyChar;
                     if (ValidateChar(inputChar))
                     {
-                        typedText = typedText.Insert(cursorPosition, inputChar.ToString());
-                        cursorPosition++;
+                        TypedText = TypedText.Insert(cursorPositionX, inputChar.ToString());
+                        cursorPositionX++;
+                        ResetCmdText();
 
-                        ResetCmdText(prompt);
-                        HighlightKeywords(typedText, keywords, cursorPosition);
+                        HighlightKeywords(TypedText, Keywords, cursorPositionX);
                     }
                 }
             }
+
         }
 
-        private static void ResetCmdText(string baseText)
+        private static void ResetCmdText()
         {
-            Console.Write("\r" + new string(' ', Console.BufferWidth - 1)); // Clear current line
+            Console.Write("\r" + new string(' ', Console.BufferWidth)); // Clear current line
             Console.ForegroundColor = ConsoleColor.Yellow;
-
-            Console.Write("\r" + baseText); // Write the prompt
+            Console.Write("\r" + PROMPT); // Write the prompt
         }
 
         private static HashSet<CliKeyword> GetKeywords(List<CliCommand> commands)
@@ -155,7 +189,7 @@ namespace NodeSystem.CliSystem.Core
             HashSet<CliKeyword> keywords = new();
             foreach (var item in commands)
             {
-                keywords.Add(new CliKeyword { Name = item.Name.ToLower(), type = CliKeywordType.BASE });
+                keywords.Add(new CliKeyword { Name = item.Name.ToLower(), CommandName = item.Name, type = CliKeywordType.BASE });
                 if(item.Cmd != null)
                 {
                     var arguments = item.Cmd.Arguments?.Select(arg => arg.Name).ToList();
@@ -163,22 +197,21 @@ namespace NodeSystem.CliSystem.Core
                     {
                         arguments.ForEach(x =>
                         {
-                            keywords.Add(new CliKeyword { Name = $"--{x}", type = CliKeywordType.VARIABLE });
+                            keywords.Add(new CliKeyword { Name = $"--{x}", CommandName = item.Name, type = CliKeywordType.VARIABLE });
                         });
 
                     }
                 }
                 if(item.SubCommands != null)
                 {
-                    var arguments = item.SubCommands.SelectMany(x => x.Arguments ?? new List<CliArgument>()).Select(arg => arg.Name).ToList();
-                    if (arguments != null)
+                    foreach (var subCmd in item.SubCommands)
                     {
-                        arguments.ForEach(x =>
+                        subCmd.Arguments?.ForEach(x =>
                         {
-                            keywords.Add(new CliKeyword { Name = $"--{x}", type = CliKeywordType.VARIABLE });
+                            keywords.Add(new CliKeyword { Name = $"--{x.Name}", CommandName = item.Name, type = CliKeywordType.VARIABLE });
                         });
-
                     }
+                    
                 }
             }
 
@@ -197,7 +230,9 @@ namespace NodeSystem.CliSystem.Core
             for (int i = 0; i < words.Length; i++)
             {
                 var word = words[i];
-                var foundKeyword = keywords.FirstOrDefault(x => x.Name.ToLower().Equals(word));
+                var baseKeywords = keywords.Where(x => x.CommandName == words[0]);
+
+                var foundKeyword = baseKeywords.FirstOrDefault(x => x.Name.ToLower().Equals(word));
                 if (foundKeyword != null)
                 {
                     if (foundKeyword.type == CliKeywordType.VARIABLE)
@@ -225,12 +260,13 @@ namespace NodeSystem.CliSystem.Core
 
             // Reset color at the end
             Console.ResetColor();
-            Console.SetCursorPosition("CMD>".Length + cursorPosition, Console.CursorTop); // Reposition cursor
 
         }
 
         public static (Dictionary<string, string>?, List<ICommand>?) ExtractCommands(string cmdText)
         {
+            if (cmdText.Trim().Length == 0)
+                return (null, null);
             List<ICommand> result = new();
 
             var allArgs = cmdText.ToLower().Trim().ExtractAnyArguments(noneArguments);
@@ -347,7 +383,23 @@ namespace NodeSystem.CliSystem.Core
 
                 return (null, null);
             }
-            
+            bool foundArgsInfo = false;
+            foreach (var v in variableArgsMap)
+            {
+                if(v.Value == "?")
+                {
+                    var cmdByNames = CliHandler.GetCommandsByBaseName(baseName);
+                    if(cmdByNames != null)
+                    {
+                        var args = cmdByNames.SelectMany(x => x.Arguments ?? new List<CliArgument>()).Where(x => x.Name == v.Key.Replace("--", string.Empty)).Distinct();
+                        DisplayArgumentsInfo(args.ToArray());
+                        foundArgsInfo = true;
+                    }
+                }
+            }
+
+            if (foundArgsInfo)
+                return (null, null);
 
             var resultArgs = processedArgs.ToDictionary(
                                 kvp => kvp.Key.Replace("--", string.Empty), // Transform the key
@@ -357,6 +409,20 @@ namespace NodeSystem.CliSystem.Core
             return (resultArgs, result);
         }
 
+        private static void DisplayArgumentsInfo(params CliArgument[] args)
+        {
+            int padding = 20;
+            foreach (var a in args)
+            {
+                Console.WriteLine("Argument Information:");
+                Console.WriteLine("\tName:".PadRight(padding) + a.Name.ToUpper());
+                Console.WriteLine("\tDescription:".PadRight(padding) + a.Description);
+                Console.WriteLine("\tOptional:".PadRight(padding) + a.IsOptional);
+                Console.WriteLine("\tAccepted Values:".PadRight(padding) + "[" + string.Join("|", a.Values ?? new List<string>()) + "]");
+                Console.WriteLine("\tStatic Value:".PadRight(padding) + (a.StaticValue == null || a.StaticValue == string.Empty ? "NULL" : a.StaticValue));
+                Console.WriteLine("\tDefault Value:".PadRight(padding) + (a.Default == null || a.Default == string.Empty ? "NULL" : a.Default));
+            }
+        }
 
         private static bool ValidateNamesArguments(Dictionary<string, string>? namesArgsMap, string baseName)
         {

@@ -52,6 +52,7 @@ namespace NodeSystem.Commands
             }
         }
 
+
         public string? ValidateArgs(string[] insertedArgs)
         {
             if (Arguments == null)

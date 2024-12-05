@@ -16,7 +16,6 @@ namespace NodeSystem.Commands.Base
             new CliCommand
             {
                 Name = "nodes",
-                Cmd = new NodesListCommand(),
                 SubCommands = new()
                 {
                     new DeleteNodeCommand(),
@@ -37,7 +36,7 @@ namespace NodeSystem.Commands.Base
             new CliCommand
             {
                 Name = "draw",
-                Cmd = new DisplayNodeTreeCommand(),
+                Cmd = new DrawNodeTreeCommand(),
             },
             new CliCommand
             {
@@ -82,8 +81,14 @@ namespace NodeSystem.Commands.Base
             {
                 return new List<ICommand>(); // Return an empty list if the base command is not found
             }
+            List<ICommand> allCommands = new List<ICommand>();
+            if(baseCommand.Cmd != null)
+            {
+                allCommands.Add(baseCommand.Cmd);
+            }
+            allCommands.AddRange(baseCommand.SubCommands);
 
-            return baseCommand.SubCommands;
+            return allCommands;
         }
 
         public static List<ICommand> GetSubCommandsBaseName(string baseName, List<string> subNames)

@@ -11,7 +11,7 @@ namespace NodeSystem
         {
             while (true)
             {
-                string? cmdText = CliProcessor.ProcessInputs(CliHandler.Commands);
+                string? cmdText = CliProcessor.ProcessInputs();
                 cmdText = cmdText.ToLower();
                 var (args, cmds) = CliProcessor.ExtractCommands(cmdText);
 
